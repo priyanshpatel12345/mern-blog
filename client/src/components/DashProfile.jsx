@@ -18,6 +18,7 @@ import {
   deleteStart,
   deleteSuccess,
   deleteFailure,
+  signOutSuccess,
 } from "../app/user/userSlice";
 import { Modal } from "flowbite-react";
 
@@ -156,6 +157,24 @@ export default function DashProfile() {
     }
   };
 
+  const handleSignOut = async (req, res) => {
+    try {
+      const res = await fetch("/api/user/signout", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log(data.message);
+      } else {
+        dispatch(signOutSuccess());
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   return (
     <div className="max-w-lg mx-auto p-3 w-full">
       <h1 className="text-center my-7 font-semibold text-3xl">Profile</h1>
@@ -236,7 +255,12 @@ export default function DashProfile() {
         >
           Delete Account
         </span>
-        <span className="cursor-pointer hover:opacity-60">Sign Out</span>
+        <span
+          className="cursor-pointer hover:opacity-60"
+          onClick={handleSignOut}
+        >
+          Sign Out
+        </span>
       </div>
       <div>
         {dataUpdateSuccess && (
