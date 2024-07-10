@@ -9,15 +9,20 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { CircularProgressbar } from "react-circular-progressbar";
+import { HiOutlineExclamationCircle } from "react-icons/hi";
 import "react-circular-progressbar/dist/styles.css";
 import {
   updateFailure,
   updateStart,
   updateSuccess,
+  deleteStart,
+  deleteSuccess,
+  deleteFailure,
 } from "../app/user/userSlice";
+import { Modal } from "flowbite-react";
 
 export default function DashProfile() {
-  const { currentUser } = useSelector((state) => state.user);
+  const { currentUser, error } = useSelector((state) => state.user);
   const [imageFile, setImageFile] = useState(null);
   const [imageFileURL, setImageFileURL] = useState(null);
   const filePickerRef = useRef();
@@ -28,6 +33,7 @@ export default function DashProfile() {
   const [imageFileUpload, setImageFileUpload] = useState(false);
   const [dataUpdateSuccess, setDataUpdateSuccess] = useState(null);
   const [updateUserError, setUpdateUserError] = useState(null);
+  const [showModel, setShowModel] = useState(false);
 
   // if (imageFile) {
   //   console.log(imageFile.name);
@@ -87,7 +93,9 @@ export default function DashProfile() {
     console.log(formData);
   };
 
-  //Submit Data
+  // ****************
+  // Update Data
+  // ***************
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,6 +131,28 @@ export default function DashProfile() {
       }
     } catch (error) {
       dispatch(updateFailure(error.message));
+    }
+  };
+  // ****************
+  // Delete Data
+  // ***************
+
+  const handleDelete = async (e) => {
+    setShowModel(false);
+    try {
+      dispatch(deleteStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        dispatch(deleteFailure(data.message));
+      } else {
+        dispatch(deleteSuccess());
+      }
+    } catch (error) {
+      dispatch(deleteFailure(error.message));
     }
   };
 
@@ -200,7 +230,12 @@ export default function DashProfile() {
         </Button>
       </form>
       <div className="text-red-500 flex justify-between mt-5">
-        <span className="cursor-pointer hover:opacity-60">Delete Account</span>
+        <span
+          className="cursor-pointer hover:opacity-60"
+          onClick={() => setShowModel(true)}
+        >
+          Delete Account
+        </span>
         <span className="cursor-pointer hover:opacity-60">Sign Out</span>
       </div>
       <div>
@@ -211,6 +246,7 @@ export default function DashProfile() {
           </Alert>
         )}
       </div>
+
       <div>
         {updateUserError && (
           <Alert color="failure" className="mt-5">
@@ -218,6 +254,39 @@ export default function DashProfile() {
           </Alert>
         )}
       </div>
+
+      <div>
+        {error && (
+          <Alert color="failure" className="mt-5">
+            {error}
+          </Alert>
+        )}
+      </div>
+
+      <Modal
+        show={showModel}
+        onClose={() => setShowModel(false)}
+        popup
+        size="md"
+      >
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center">
+            <HiOutlineExclamationCircle className="h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto" />
+            <h3 className="text-gray-500 dark:text-gray-400 mb-5 text-lg">
+              Are you sure you want to delete your account?
+            </h3>
+            <div className="flex justify-center gap-5">
+              <Button color="failure" onClick={handleDelete}>
+                Yes I'm sure
+              </Button>
+              <Button color="failure" onClick={() => setShowModel(false)}>
+                No, Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
