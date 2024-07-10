@@ -5,11 +5,11 @@ import "react-quill/dist/quill.snow.css";
 
 export default function CreatePost() {
   return (
-    <div className="sm:p-20 p-7 max-3xl mx-auto min-h-screen">
+    <div className=" p-5 max-w-3xl mx-auto min-h-screen ">
       <h1 className="text-center font-semibold text-3xl my-7 text-black ">
         Create a Post
       </h1>
-      <form className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4 ">
         <div className="flex flex-col gap-4 sm:flex-row justify-between">
           <TextInput
             type="text"
