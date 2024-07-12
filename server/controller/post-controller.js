@@ -39,28 +39,18 @@ export const getPosts = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 9;
     const sortDirection = req.query.order === "asc" ? 1 : -1;
 
-    const query = {};
-
-    if (req.query.userId) {
-      query.userId = req.query.userId;
-    }
-    if (req.query.category) {
-      query.category = req.query.category;
-    }
-    if (req.query.slug) {
-      query.slug = req.query.slug;
-    }
-    if (req.query.postId) {
-      query.postId = req.query.postId;
-    }
-    if (req.query.searchTerm) {
-      query.$or = [
-        { title: { $regex: req.query.searchTerm, $options: "i" } },
-        { content: { $regex: req.query.searchTerm, $options: "i" } },
-      ];
-    }
-
-    const posts = await POST.find(query)
+    const posts = await POST.find({
+      ...(req.query.userId && { userId: req.query.userId }),
+      ...(req.query.category && { category: req.query.category }),
+      ...(req.query.slug && { slug: req.query.slug }),
+      ...(req.query.postId && { _id: req.query.postId }),
+      ...(req.query.searchTerm && {
+        $or: [
+          { title: { $regex: req.query.searchTerm, $options: "i" } },
+          { content: { $regex: req.query.searchTerm, $options: "i" } },
+        ],
+      }),
+    })
       .sort({ updatedAt: sortDirection })
       .skip(startIndex)
       .limit(limit);
@@ -94,13 +84,38 @@ export const getPosts = async (req, res, next) => {
 // *************************
 
 export const deletePost = async (req, res, next) => {
-  // if (!req.user.isAdmin || req.user.id !== req.params.userId) {
-  //   return errorHandler(403, "You are not allowed to delete this post");
-  // }
+  if (!req.user.isAdmin || req.user.id !== req.params.userId) {
+    return errorHandler(403, "You are not allowed to delete this post");
+  }
 
   try {
     await POST.findByIdAndDelete(req.params.postId);
     res.status(200).json("The Post has been deleted !!");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updatePost = async (req, res, next) => {
+  if (!req.user.isAdmin || req.user.id !== req.params.userId) {
+    return errorHandler(403, "You are not allowed to update this post");
+  }
+
+  try {
+    const updatePost = await POST.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: {
+          title: req.body.title,
+          category: req.body.category,
+          content: req.body.content,
+          image: req.body.image,
+        },
+      },
+      { new: true }
+    );
+
+    res.status(200).json(updatePost);
   } catch (error) {
     next(error);
   }
